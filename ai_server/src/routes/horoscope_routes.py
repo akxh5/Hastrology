@@ -15,7 +15,7 @@ router = APIRouter()
     response_model=HoroscopeResponse,
     status_code=status.HTTP_200_OK,
     summary="Generate personalized astro cards",
-    description="Generate Spotify Wrapped-style horoscope cards based on date of birth, time, and place"
+    description="Generate X-shareable horoscope cards based on date of birth, time, and place"
 )
 async def generate_horoscope(request: HoroscopeRequest):
     """

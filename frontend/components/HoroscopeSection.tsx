@@ -3,7 +3,7 @@
 import { FC, useState, useEffect } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { Transaction } from '@solana/web3.js';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { AstroCard } from './AstroCard';
@@ -12,196 +12,70 @@ import { buildEnterLotteryInstruction } from '@/lib/hastrology_program';
 
 const PAYMENT_AMOUNT = 0.01; // SOL
 
-// Helper function to get card color based on ruling planet
-const getCardColor = (planet: string): string => {
-    const colorMap: Record<string, string> = {
-        sun: '#F59E0B',
-        moon: '#3B82F6',
-        mars: '#EF4444',
-        mercury: '#06B6D4',
-        jupiter: '#22C55E',
-        venus: '#EC4899',
-        saturn: '#9333EA'
+// Planetary theme configurations
+const getPlanetaryTheme = (planet: string) => {
+    const themes: Record<string, { 
+        gradient: string; 
+        glow: string; 
+        accent: string;
+        emoji: string;
+    }> = {
+        sun: { 
+            gradient: 'from-amber-500/20 via-orange-500/10 to-yellow-500/20', 
+            glow: 'shadow-[0_0_80px_rgba(251,146,60,0.3)]',
+            accent: 'from-amber-400 to-orange-500',
+            emoji: '☀️'
+        },
+        moon: { 
+            gradient: 'from-blue-500/20 via-indigo-500/10 to-cyan-500/20', 
+            glow: 'shadow-[0_0_80px_rgba(59,130,246,0.3)]',
+            accent: 'from-blue-400 to-indigo-500',
+            emoji: '🌙'
+        },
+        mars: { 
+            gradient: 'from-red-500/20 via-rose-500/10 to-orange-500/20', 
+            glow: 'shadow-[0_0_80px_rgba(239,68,68,0.3)]',
+            accent: 'from-red-500 to-rose-600',
+            emoji: '🔥'
+        },
+        mercury: { 
+            gradient: 'from-cyan-500/20 via-teal-500/10 to-blue-500/20', 
+            glow: 'shadow-[0_0_80px_rgba(6,182,212,0.3)]',
+            accent: 'from-cyan-400 to-teal-500',
+            emoji: '⚡'
+        },
+        jupiter: { 
+            gradient: 'from-emerald-500/20 via-green-500/10 to-teal-500/20', 
+            glow: 'shadow-[0_0_80px_rgba(34,197,94,0.3)]',
+            accent: 'from-emerald-400 to-green-500',
+            emoji: '🌟'
+        },
+        venus: { 
+            gradient: 'from-pink-500/20 via-rose-500/10 to-purple-500/20', 
+            glow: 'shadow-[0_0_80px_rgba(236,72,153,0.3)]',
+            accent: 'from-pink-400 to-rose-500',
+            emoji: '💖'
+        },
+        saturn: { 
+            gradient: 'from-purple-500/20 via-violet-500/10 to-indigo-500/20', 
+            glow: 'shadow-[0_0_80px_rgba(147,51,234,0.3)]',
+            accent: 'from-purple-400 to-violet-600',
+            emoji: '🪐'
+        },
+        uranus: {
+            gradient: 'from-sky-500/20 via-blue-500/10 to-indigo-500/20',
+            glow: 'shadow-[0_0_80px_rgba(14,165,233,0.3)]',
+            accent: 'from-sky-400 to-blue-500',
+            emoji: '💫'
+        },
+        neptune: {
+            gradient: 'from-violet-500/20 via-purple-500/10 to-fuchsia-500/20',
+            glow: 'shadow-[0_0_80px_rgba(139,92,246,0.3)]',
+            accent: 'from-violet-400 to-purple-500',
+            emoji: '🌊'
+        }
     };
-    return colorMap[planet.toLowerCase()] || '#9333EA';
-};
-
-// Helper function to get card gradient based on ruling planet
-const getCardGradient = (planet: string): string => {
-    const gradientMap: Record<string, string> = {
-        sun: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-        moon: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-        mars: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
-        mercury: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
-        jupiter: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
-        venus: 'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)',
-        saturn: 'linear-gradient(135deg, #9333EA 0%, #7C3AED 100%)'
-    };
-    return gradientMap[planet.toLowerCase()] || 'linear-gradient(135deg, #9333EA 0%, #7C3AED 100%)';
-};
-
-// Demo cards for preview mode (keeping for backwards compatibility)
-const DEMO_CARDS: Record<CardType, AstroCardType> = {
-    overall_vibe: {
-        front: {
-            tagline: "Main character energy activated",
-            luck_score: 88,
-            vibe_status: "Stellar",
-            energy_emoji: "✨",
-            zodiac_sign: "Leo"
-        },
-        back: {
-            detailed_reading: "The sun is trining your natal Jupiter, expanding your ego in the best way possible. That confidence isn't delusional, it's destiny.",
-            hustle_alpha: "Pitch the big idea today.",
-            shadow_warning: "Don't stepping on others' toes.",
-            lucky_assets: { number: "1", color: "Gold", power_hour: "2 PM" }
-        },
-        ruling_planet_theme: "sun"
-    },
-    shine: {
-        front: {
-            tagline: "You will shine at Leadership today",
-            luck_score: 92,
-            vibe_status: "Stellar",
-            energy_emoji: "👑",
-            zodiac_sign: "Leo"
-        },
-        back: {
-            detailed_reading: "People are looking to you for direction. Your natural authority is at an all time high.",
-            hustle_alpha: "Take charge of the meeting.",
-            shadow_warning: "Avoid micromanaging.",
-            lucky_assets: { number: "5", color: "Orange", power_hour: "10 AM" }
-        },
-        ruling_planet_theme: "sun"
-    },
-    health: {
-        front: {
-            tagline: "Your body needs a systems check",
-            luck_score: 65,
-            vibe_status: "Shaky",
-            energy_emoji: "🔋",
-            zodiac_sign: "Virgo"
-        },
-        back: {
-            detailed_reading: "Mars is draining your battery. That fatigue is a signal, not a weakness.",
-            hustle_alpha: "Maximize sleep ROI.",
-            shadow_warning: "Avoid heavy lifting after 6 PM.",
-            lucky_assets: { number: "4", color: "Green", power_hour: "9 PM" }
-        },
-        ruling_planet_theme: "mars"
-    },
-    wealth: {
-        front: {
-            tagline: "The money printer is warming up",
-            luck_score: 85,
-            vibe_status: "Ascending",
-            energy_emoji: "💸",
-            zodiac_sign: "Taurus"
-        },
-        back: {
-            detailed_reading: "Venus is entering your financial sector. Unexpected liquidity is likely.",
-            hustle_alpha: "Review your portfolio.",
-            shadow_warning: "Don't impulse buy luxury items.",
-            lucky_assets: { number: "8", color: "Emerald", power_hour: "4 PM" }
-        },
-        ruling_planet_theme: "venus"
-    },
-    career: {
-        front: {
-            tagline: "You're operating in Founder Mode",
-            luck_score: 90,
-            vibe_status: "Stellar",
-            energy_emoji: "🚀",
-            zodiac_sign: "Capricorn"
-        },
-        back: {
-            detailed_reading: "Saturn says your hard work is about to pay dividends. Stay the course.",
-            hustle_alpha: "Network vertically today.",
-            shadow_warning: "Avoid burnout.",
-            lucky_assets: { number: "10", color: "Grey", power_hour: "11 AM" }
-        },
-        ruling_planet_theme: "saturn"
-    },
-    love: {
-        front: {
-            tagline: "Your aura is glitching (in a good way)",
-            luck_score: 75,
-            vibe_status: "Ascending",
-            energy_emoji: "💘",
-            zodiac_sign: "Libra"
-        },
-        back: {
-            detailed_reading: "Someone is obsessing over you. Your magnetism is tangible.",
-            hustle_alpha: "Send the risky text.",
-            shadow_warning: "Avoid exes.",
-            lucky_assets: { number: "2", color: "Pink", power_hour: "8 PM" }
-        },
-        ruling_planet_theme: "venus"
-    },
-    social: {
-        front: {
-            tagline: "Social battery at 40%",
-            luck_score: 40,
-            vibe_status: "Shaky",
-            energy_emoji: "🪫",
-            zodiac_sign: "Aquarius"
-        },
-        back: {
-            detailed_reading: "Too much noise. You need isolation to recharge your genius.",
-            hustle_alpha: "Go ghost mode.",
-            shadow_warning: "Avoid large crowds.",
-            lucky_assets: { number: "0", color: "Blue", power_hour: "Midnight" }
-        },
-        ruling_planet_theme: "uranus"
-    },
-    growth: {
-        front: {
-            tagline: "Evolution is uncomfortable",
-            luck_score: 80,
-            vibe_status: "Ascending",
-            energy_emoji: "🌱",
-            zodiac_sign: "Sagittarius"
-        },
-        back: {
-            detailed_reading: "You are shedding a skin. It hurts because it's working.",
-            hustle_alpha: "Learn a new skill.",
-            shadow_warning: "Don't look back.",
-            lucky_assets: { number: "9", color: "Purple", power_hour: "7 AM" }
-        },
-        ruling_planet_theme: "jupiter"
-    },
-    luck: {
-        front: {
-            tagline: "Glitch in the matrix detected",
-            luck_score: 99,
-            vibe_status: "Stellar",
-            energy_emoji: "🍀",
-            zodiac_sign: "Pisces"
-        },
-        back: {
-            detailed_reading: "The universe is rigged in your favor today. Buy the ticket.",
-            hustle_alpha: "Take the big risk.",
-            shadow_warning: "None.",
-            lucky_assets: { number: "777", color: "Rainbow", power_hour: "All Day" }
-        },
-        ruling_planet_theme: "neptune"
-    },
-    wild_card: {
-        front: {
-            tagline: "Expect the unexpected",
-            luck_score: 50,
-            vibe_status: "Eclipse",
-            energy_emoji: "🃏",
-            zodiac_sign: "Gemini"
-        },
-        back: {
-            detailed_reading: "Chaos is a ladder. Climb it.",
-            hustle_alpha: "Pivot hard.",
-            shadow_warning: "Trust no one.",
-            lucky_assets: { number: "???", color: "Black", power_hour: "3 AM" }
-        },
-        ruling_planet_theme: "mercury"
-    }
+    return themes[planet.toLowerCase()] || themes.mars;
 };
 
 export const HoroscopeSection: FC = () => {
@@ -212,6 +86,8 @@ export const HoroscopeSection: FC = () => {
     const [status, setStatus] = useState<'checking' | 'ready' | 'paying' | 'generating' | 'complete'>('checking');
     const [error, setError] = useState<string | null>(null);
     const [isPaid, setIsPaid] = useState(false);
+
+    const theme = card ? getPlanetaryTheme(card.ruling_planet_theme || 'mars') : getPlanetaryTheme('mars');
 
     useEffect(() => {
         if (publicKey && user) {
@@ -225,19 +101,9 @@ export const HoroscopeSection: FC = () => {
         try {
             const result = await api.getStatus(publicKey.toBase58());
 
-            if (result.status === 'exists') {
-                // Handle both new format (card) and old format (cards) for backwards compatibility
-                if (result.card) {
-                    setCard(result.card);
-                    setStatus('complete');
-                } else if (result.cards) {
-                    // Old format: convert first card or use a default
-                    const firstCardKey = Object.keys(result.cards)[0];
-                    if (firstCardKey) {
-                        setCard(result.cards[firstCardKey]);
-                        setStatus('complete');
-                    }
-                }
+            if (result.status === 'exists' && result.card) {
+                setCard(result.card);
+                setStatus('complete');
             } else if (result.status === 'paid') {
                 setIsPaid(true);
                 setStatus('ready');
@@ -260,56 +126,30 @@ export const HoroscopeSection: FC = () => {
         let signature = '';
 
         try {
-            // Only require payment if not already verified on-chain
             if (!isPaid) {
                 if (!sendTransaction) return;
 
                 setStatus('paying');
-                // Build enter_lottery instruction
                 const instruction = await buildEnterLotteryInstruction(publicKey, connection);
                 const transaction = new Transaction().add(instruction);
 
                 signature = await sendTransaction(transaction, connection);
-                // Wait for confirmation to ensure backend can verify PDA
                 await connection.confirmTransaction(signature, 'confirmed');
             }
 
-            // Generate horoscope cards
             setStatus('generating');
-
-            // Call backend 
             const result = await api.confirmHoroscope(publicKey.toBase58(), signature || 'ALREADY_PAID');
 
             setCard(result.card);
             setStatus('complete');
-            setIsPaid(false); // Reset for next day/session logic
+            setIsPaid(false);
         } catch (err: any) {
             console.error('Payment/Generation error:', err);
-
-            // Should we check for "already processed" error from chain? 
-            // If so, we could retry without payment.
-            // But relying on `checkStatus` (which calls `verifyLotteryParticipation`) is safer.
-
             setError(err.message || 'Failed to process request');
             setStatus('ready');
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleDemo = async () => {
-        setLoading(true);
-        setError(null);
-        setStatus('generating');
-
-        // Simulate generation delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        // Use demo card (first card from demo cards)
-        const demoCard = DEMO_CARDS.overall_vibe;
-        setCard(demoCard);
-        setStatus('complete');
-        setLoading(false);
     };
 
     const handleNewReading = () => {
@@ -322,119 +162,234 @@ export const HoroscopeSection: FC = () => {
     }
 
     return (
-        <section id="horoscope-section" className="min-h-screen flex items-center justify-center py-20 px-4 relative">
-            {/* Background Elements */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <section id="horoscope-section" className="min-h-screen flex items-center justify-center py-20 px-4 relative overflow-hidden">
+            {/* Dynamic Planetary Background */}
+            <motion.div 
+                className="absolute inset-0 pointer-events-none"
+                animate={{
+                    background: status === 'complete' 
+                        ? `radial-gradient(circle at 50% 50%, ${theme.gradient.split(' ')[1].replace('from-', '').replace('/20', '/5')}, transparent 70%)`
+                        : 'radial-gradient(circle at 50% 50%, rgba(147,51,234,0.05), transparent 70%)'
+                }}
+                transition={{ duration: 1.5 }}
+            >
                 <div className="absolute top-1/4 right-0 w-[600px] h-[600px] bg-purple-900/10 rounded-full blur-[120px]"></div>
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 rounded-full blur-[100px]"></div>
-            </div>
-
-            <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                viewport={{ once: true }}
-                className="w-full max-w-3xl relative z-10"
-            >
-                {status === 'ready' && (
-                    <div className="glass-panel rounded-3xl p-8 md:p-12 text-center border-t border-white/10">
-                        <div className="inline-block p-4 rounded-full bg-purple-500/10 mb-6 animate-pulse-slow">
-                            <span className="text-4xl">✨</span>
-                        </div>
-
-                        <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-pink-200">
-                            Ready for Your Astro Cards?
-                        </h2>
-                        <p className="text-slate-400 mb-10 text-lg max-w-xl mx-auto">
-                            Get your personalized daily horoscope card. A cosmic reading tailored to your birth chart and current energy.
-                        </p>
-
-                        {error && (
-                            <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300 text-sm flex items-center justify-center gap-2">
-                                <span className="text-lg">⚠️</span> {error}
-                            </div>
-                        )}
-
-                        <div className="">
-                            {/* Payment Option */}
-                            <div className="group relative">
-                                <button
-                                    onClick={handlePayment}
-                                    disabled={loading}
-                                    className="relative w-full h-full bg-slate-900 rounded-2xl p-6 flex flex-col items-center justify-center gap-4 hover:bg-slate-800 transition-all duration-300"
-                                >
-                                    <div className="text-purple-400 font-bold tracking-wider text-sm uppercase">Full Reading</div>
-                                    <div className="text-3xl font-bold text-white">{PAYMENT_AMOUNT} SOL</div>
-                                    <div className="w-full py-3 mt-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl text-white font-bold shadow-lg shadow-purple-900/20 group-hover:shadow-purple-600/40 transition-all">
-                                        {loading ? 'Processing...' : (isPaid ? 'Generate Cards (Paid)' : 'Unlock Cards')}
-                                    </div>
-                                </button>
-                            </div>
-
-                            {/* Demo Option */}
-                            {/* <button
-                                onClick={handleDemo}
-                                disabled={loading}
-                                className="glass-card rounded-2xl p-6 flex flex-col items-center justify-center gap-4 hover:bg-white/5 transition-all duration-300 border border-white/5 hover:border-blue-400/30 group"
-                            >
-                                <div className="text-blue-400 font-bold tracking-wider text-sm uppercase">Preview</div>
-                                <div className="text-3xl font-bold text-white">Free</div>
-                                <div className="text-slate-500 text-sm">Sample Cards</div>
-                                <div className="w-full py-3 mt-2 bg-slate-800 text-blue-300 rounded-xl font-bold border border-blue-500/20 group-hover:bg-blue-500/10 group-hover:text-blue-200 transition-all">
-                                    Try Demo
-                                </div>
-                            </button> */}
-                        </div>
-                    </div>
-                )}
-
-                {(status === 'paying' || status === 'generating') && (
-                    <div className="glass-panel rounded-3xl p-16 text-center">
-                        <div className="cosmic-loader mb-8"></div>
-                        <h3 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                            {status === 'paying' ? 'Confirming Transaction...' : 'Generating Your Cards...'}
-                        </h3>
-                        <p className="text-slate-400 text-lg animate-pulse">
-                            {status === 'paying' ? 'Please approve the request in your wallet' : 'AI is crafting your cosmic cards ✨'}
-                        </p>
-                    </div>
-                )}
-
-                {status === 'complete' && card && (
-                    <div className="w-full flex flex-col items-center">
-                        <div className="w-full max-w-md mx-auto" style={{ height: '60vh' }}>
-                            <AstroCard
-                                card={{
-                                    ...card,
-                                    type: 'overall_vibe',  // Default type for single card
-                                    color: getCardColor((card as any).ruling_planet || (card as any).ruling_planet_theme || 'mars'),
-                                    gradient: getCardGradient((card as any).ruling_planet || (card as any).ruling_planet_theme || 'mars')
-                                }}
-                                index={0}
-                                isActive={true}
-                                totalCards={1}
-                                onSwipe={() => {}}
-                            />
-                        </div>
-
-                        {/* New Reading Button */}
-                        <motion.div
-                            className="flex justify-center mt-8"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.5 }}
-                        >
-                            <button
-                                onClick={handleNewReading}
-                                className="py-3 px-8 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl transition-all border border-white/5 hover:border-white/10"
-                            >
-                                ↻ New Reading
-                            </button>
-                        </motion.div>
-                    </div>
-                )}
             </motion.div>
+
+            <div className="w-full max-w-4xl relative z-10">
+                <AnimatePresence mode="wait">
+                    {/* COSMIC ALTAR - READY STATE */}
+                    {status === 'ready' && (
+                        <motion.div
+                            key="ready"
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                            transition={{ duration: 0.6, ease: "easeOut" }}
+                            className="relative"
+                        >
+                            {/* Cosmic Glow Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-transparent to-pink-500/20 rounded-[3rem] blur-3xl"></div>
+                            
+                            <div className="relative backdrop-blur-2xl bg-gradient-to-br from-white/5 via-white/[0.02] to-transparent border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                                {/* Decorative Elements */}
+                                <div className="absolute top-8 left-8 w-20 h-20 bg-purple-500/10 rounded-full blur-2xl animate-pulse"></div>
+                                <div className="absolute bottom-8 right-8 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-700"></div>
+
+                                {/* Content */}
+                                <div className="relative text-center">
+                                    {/* Icon */}
+                                    <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                                        className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-xl border border-white/20 mb-8 shadow-lg"
+                                    >
+                                        <span className="text-5xl animate-pulse-slow">✨</span>
+                                    </motion.div>
+
+                                    {/* Title */}
+                                    <motion.h2
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                        className="text-4xl md:text-6xl font-bold mb-4 tracking-tight"
+                                    >
+                                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-pink-200">
+                                            Your Cosmic Reading Awaits
+                                        </span>
+                                    </motion.h2>
+
+                                    {/* Subtitle */}
+                                    <motion.p
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.4 }}
+                                        className="text-slate-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto font-light"
+                                    >
+                                        Unlock your personalized astrology card powered by AI and your birth chart
+                                    </motion.p>
+
+                                    {/* Error Message */}
+                                    {error && (
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl backdrop-blur-xl"
+                                        >
+                                            <div className="flex items-center justify-center gap-3 text-red-300">
+                                                <span className="text-xl">⚠️</span>
+                                                <span className="text-sm font-medium">{error}</span>
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    {/* Payment Button */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.5 }}
+                                        className="max-w-md mx-auto"
+                                    >
+                                        <button
+                                            onClick={handlePayment}
+                                            disabled={loading}
+                                            className="group relative w-full overflow-hidden rounded-2xl p-[2px] transition-all duration-300 hover:scale-105"
+                                        >
+                                            {/* Animated Border Gradient */}
+                                            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 opacity-75 blur-sm group-hover:opacity-100 transition-opacity"></div>
+                                            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 animate-gradient"></div>
+                                            
+                                            <div className="relative bg-[#0D0D15] rounded-2xl p-8 flex flex-col items-center gap-4">
+                                                {/* Label */}
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-purple-400 font-bold tracking-widest text-xs uppercase">
+                                                        Full Cosmic Reading
+                                                    </span>
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></div>
+                                                </div>
+
+                                                {/* Price */}
+                                                <div className="flex items-baseline gap-2">
+                                                    <span className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-white to-purple-200">
+                                                        {PAYMENT_AMOUNT}
+                                                    </span>
+                                                    <span className="text-2xl text-slate-400 font-semibold">SOL</span>
+                                                </div>
+
+                                                {/* CTA */}
+                                                <div className="w-full py-4 px-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg shadow-purple-900/50 group-hover:shadow-purple-600/50 transition-all flex items-center justify-center gap-2">
+                                                    {loading ? (
+                                                        <>
+                                                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                            </svg>
+                                                            <span>Processing...</span>
+                                                        </>
+                                                    ) : isPaid ? (
+                                                        <>
+                                                            <span>Generate My Reading</span>
+                                                            <span className="text-lg">✨</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span>Unlock Your Reading</span>
+                                                            <span className="text-lg">🔮</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </motion.div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* PROCESSING STATES */}
+                    {(status === 'paying' || status === 'generating') && (
+                        <motion.div
+                            key="processing"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.6 }}
+                            className="relative"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-transparent to-pink-500/20 rounded-[3rem] blur-3xl animate-pulse"></div>
+                            
+                            <div className="relative backdrop-blur-2xl bg-gradient-to-br from-white/5 via-white/[0.02] to-transparent border border-white/10 rounded-[3rem] p-16 text-center shadow-2xl">
+                                {/* Cosmic Loader */}
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                    className="w-24 h-24 mx-auto mb-8 relative"
+                                >
+                                    <div className="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
+                                    <div className="absolute inset-0 rounded-full border-4 border-t-purple-500 border-r-pink-500 border-b-transparent border-l-transparent"></div>
+                                </motion.div>
+
+                                <motion.h3
+                                    animate={{ opacity: [0.5, 1, 0.5] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                    className="text-3xl md:text-4xl font-bold text-white mb-4"
+                                >
+                                    {status === 'paying' ? 'Confirming Transaction' : 'Channeling the Cosmos'}
+                                </motion.h3>
+
+                                <p className="text-slate-400 text-lg">
+                                    {status === 'paying' 
+                                        ? 'Please approve the transaction in your wallet' 
+                                        : 'AI is crafting your personalized reading ✨'
+                                    }
+                                </p>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* COMPLETE STATE - CARD DISPLAY */}
+                    {status === 'complete' && card && (
+                        <motion.div
+                            key="complete"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            className="flex flex-col items-center"
+                        >
+                            {/* Planetary Header */}
+                            <motion.div
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="mb-8 text-center"
+                            >
+                                <div className="inline-flex items-center gap-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-full px-6 py-3 shadow-lg">
+                                    <span className="text-2xl">{theme.emoji}</span>
+                                    <span className="text-sm font-bold uppercase tracking-wider text-white/80">
+                                        {card.ruling_planet_theme} Energy
+                                    </span>
+                                </div>
+                            </motion.div>
+
+                            {/* Card Display */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 50 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4, duration: 0.8 }}
+                                className="w-full max-w-md mx-auto"
+                                style={{ height: '70vh', minHeight: '600px' }}
+                            >
+                                <AstroCard card={card} />
+                            </motion.div>
+
+                           
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </section>
     );
 };
-
