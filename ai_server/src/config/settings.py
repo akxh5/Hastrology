@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     rate_limit_times: int = Field(default=10, alias="RATE_LIMIT_TIMES")
     rate_limit_seconds: int = Field(default=60, alias="RATE_LIMIT_SECONDS")
     
+    # Ephemeris Configuration (Swiss Ephemeris)
+    ephemeris_path: str = Field(default="./ephe", alias="EPHEMERIS_PATH")
+    ayanamsa: str = Field(default="LAHIRI", alias="AYANAMSA")
+
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

@@ -1,0 +1,98 @@
+{
+    "Sun": {
+        "shadow_warning": "Ego conflicts and authority struggles may arise. Avoid power plays.",
+        "traditional_remedy": "Offer water to the Sun at sunrise. Practice gratitude.",
+        "modern_action": "10 minutes of morning sun exposure. Compliment someone genuinely today.",
+        "mantras": "Om Suryaya Namaha",
+        "color": "Gold",
+        "day": "Sunday"
+    },
+    "Moon": {
+        "shadow_warning": "Emotional volatility and oversensitivity. Mind may feel foggy.",
+        "traditional_remedy": "Drink water in a silver vessel. Spend time near water.",
+        "modern_action": "Journal your feelings for 10 minutes. Hydrate intentionally.",
+        "mantras": "Om Chandraya Namaha",
+        "color": "White",
+        "day": "Monday"
+    },
+    "Mercury": {
+        "shadow_warning": "Miscommunication, tech glitches, and scattered thinking ahead.",
+        "traditional_remedy": "Feed green vegetables to cows. Chant mantras.",
+        "modern_action": "Re-read all important messages before sending. No multitasking today.",
+        "mantras": "Om Budhaya Namaha",
+        "color": "Green",
+        "day": "Wednesday"
+    },
+    "Venus": {
+        "shadow_warning": "Relationship friction and overspending tendencies.",
+        "traditional_remedy": "Donate white clothes or sweets to those in need.",
+        "modern_action": "Random act of kindness. Curate your aesthetic environment.",
+        "mantras": "Om Shukraya Namaha",
+        "color": "Pink",
+        "day": "Friday"
+    },
+    "Mars": {
+        "shadow_warning": "Impulsive actions and conflicts may lead to regret. Control aggression.",
+        "traditional_remedy": "Donate red lentils. Fast on Tuesdays.",
+        "modern_action": "High-intensity workout to channel excess Mars energy. Cold shower.",
+        "mantras": "Om Mangalaya Namaha",
+        "color": "Red",
+        "day": "Tuesday"
+    },
+    "Jupiter": {
+        "shadow_warning": "Overconfidence and poor judgment. Avoid big commitments today.",
+        "traditional_remedy": "Respect teachers and elders. Donate yellow items.",
+        "modern_action": "Learn something new for 30 minutes. Mentor someone.",
+        "mantras": "Om Gurave Namaha",
+        "color": "Yellow",
+        "day": "Thursday"
+    },
+    "Saturn": {
+        "shadow_warning": "Heavy energy and feeling 'stuck' in your routine. Delays expected.",
+        "traditional_remedy": "Service to the elderly. Feed crows. Fast on Saturdays.",
+        "modern_action": "Deep Work session: Put phone in another room for 4 hours.",
+        "mantras": "Om Shani Devaya Namaha",
+        "color": "Black",
+        "day": "Saturday"
+    },
+    "Rahu": {
+        "shadow_warning": "Obsessive desires and illusions may cloud judgment.",
+        "traditional_remedy": "Donate dark blue clothes. Avoid intoxicants.",
+        "modern_action": "Digital detox for 2 hours. Reality-check your desires.",
+        "mantras": "Om Rahave Namaha",
+        "color": "Blue",
+        "day": "Saturday"
+    },
+    "Ketu": {
+        "shadow_warning": "Detachment and confusion about life direction.",
+        "traditional_remedy": "Meditation and spiritual practices. Donate blankets.",
+        "modern_action": "20 minutes of silent meditation. Declutter one area.",
+        "mantras": "Om Ketave Namaha",
+        "color": "Grey",
+        "day": "Tuesday"
+    },
+    "aspect_remedies": {
+        "square": {
+            "description": "Internal friction and obstacles",
+            "general_remedy": "Patience and structured approach. Break tasks into smaller steps."
+        },
+        "opposition": {
+            "description": "External conflicts and projections",
+            "general_remedy": "Seek balance and compromise. Consider the other perspective."
+        }
+    },
+    "activation_guidance": {
+        "transit_conjunct_time_lord": {
+            "intensity": "high",
+            "guidance": "This transit directly activates your Year Lord. Pay close attention to themes today."
+        },
+        "transit_square_time_lord": {
+            "intensity": "challenging",
+            "guidance": "Friction between transiting planet and your Year Lord. Navigate with awareness."
+        },
+        "transit_trine_time_lord": {
+            "intensity": "supportive",
+            "guidance": "Harmonious flow between transiting energy and your Year Lord's themes."
+        }
+    }
+}

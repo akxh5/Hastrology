@@ -20,6 +20,12 @@ logs/
 # IDE
 .vscode/
 .idea/
+
+# Ephemeris data files (large binary files)
+ephe/*.se1
+ephe/*.txt
+!ephe/README.md
+
 *.swp
 *.swo
 *~

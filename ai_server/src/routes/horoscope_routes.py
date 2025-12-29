@@ -1,5 +1,5 @@
 """
-API routes for horoscope generation
+API routes for horoscope generation - CDO Enhanced
 """
 from fastapi import APIRouter, HTTPException, status
 from ..models.request_models import HoroscopeRequest
@@ -14,43 +14,58 @@ router = APIRouter()
     "/generate_horoscope",
     response_model=HoroscopeResponse,
     status_code=status.HTTP_200_OK,
-    summary="Generate personalized astro cards",
-    description="Generate X-shareable horoscope cards based on date of birth, time, and place"
+    summary="Generate personalized astro cards with CDO",
+    description="Generate high-fidelity horoscope cards using Swiss Ephemeris and Cosmic Data Object architecture"
 )
 async def generate_horoscope(request: HoroscopeRequest):
     """
-    Generate personalized horoscope card (single card) based on birth details.
+    Generate personalized horoscope card based on birth details and geolocation.
+    
+    Uses Swiss Ephemeris for topocentric planetary calculations and builds
+    a Cosmic Data Object (CDO) for AI-powered interpretation.
     
     Args:
-        request: HoroscopeRequest containing dob, birth_time, and birth_place
+        request: HoroscopeRequest containing dob, birth_time, birth_place,
+                 latitude, longitude, and optional timezone_offset
         
     Returns:
-        HoroscopeResponse with a single structured astro card
+        HoroscopeResponse with structured astro card and CDO data
         
     Raises:
         HTTPException: If horoscope generation fails
     """
     try:
-        logger.info(f"Received horoscope request for DOB: {request.dob}")
+        logger.info(f"CDO Horoscope request: DOB={request.dob}, Lat={request.latitude}, Lon={request.longitude}")
         
-        card_data, was_cached = await horoscope_service.generate_horoscope(
+        card_data, was_cached, generation_mode = await horoscope_service.generate_horoscope(
             dob=request.dob,
             birth_time=request.birth_time,
-            birth_place=request.birth_place
+            birth_place=request.birth_place,
+            latitude=request.latitude,
+            longitude=request.longitude,
+            timezone_offset=request.timezone_offset or 0.0
         )
         
         # Convert raw card data to AstroCard model
         card = AstroCard(**card_data)
         
+        logger.info(f"Generated horoscope (mode={generation_mode}, cached={was_cached})")
+        
         return HoroscopeResponse(
             card=card,
-            cached=was_cached
+            cached=was_cached,
+            generation_mode=generation_mode
         )
         
+    except ValueError as e:
+        logger.error(f"Validation error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid input: {str(e)}"
+        )
     except Exception as e:
         logger.error(f"Error in generate_horoscope endpoint: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate horoscope: {str(e)}"
         )
-
