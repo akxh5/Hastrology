@@ -13,14 +13,17 @@ class UserController {
      */
     async register(req, res, next) {
         try {
-            const { walletAddress, dob, birthTime, birthPlace } = req.body;
+            const { walletAddress, dob, birthTime, birthPlace, latitude, longitude, timezoneOffset } = req.body;
 
             // Register/update user
             const user = await userService.registerUser({
                 walletAddress,
                 dob,
                 birthTime,
-                birthPlace
+                birthPlace,
+                latitude,
+                longitude,
+                timezoneOffset
             });
 
             // Generate JWT token for the user
@@ -38,6 +41,9 @@ class UserController {
                     dob: user.dob,
                     birthTime: user.birth_time,
                     birthPlace: user.birth_place,
+                    latitude: user.latitude,
+                    longitude: user.longitude,
+                    timezoneOffset: user.timezone_offset,
                     createdAt: user.created_at
                 },
                 token
@@ -47,6 +53,7 @@ class UserController {
             next(error);
         }
     }
+
 
     /**
      * Get user profile by wallet address
@@ -69,6 +76,9 @@ class UserController {
                     dob: user.dob,
                     birthTime: user.birth_time,
                     birthPlace: user.birth_place,
+                    latitude: user.latitude,
+                    longitude: user.longitude,
+                    timezoneOffset: user.timezone_offset,
                     createdAt: user.created_at
                 }
             });
@@ -77,6 +87,7 @@ class UserController {
             next(error);
         }
     }
+
 }
 
 module.exports = new UserController();

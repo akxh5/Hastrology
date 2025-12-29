@@ -14,7 +14,7 @@ class UserService {
      * @param {Object} userData - User registration data
      * @returns {Promise<Object>} Created/updated user
      */
-    async registerUser({ walletAddress, dob, birthTime, birthPlace }) {
+    async registerUser({ walletAddress, dob, birthTime, birthPlace, latitude, longitude, timezoneOffset }) {
         try {
             logger.info('Registering user:', { walletAddress });
 
@@ -27,6 +27,9 @@ class UserService {
                         dob: dob,
                         birth_time: birthTime,
                         birth_place: birthPlace,
+                        latitude: latitude || null,
+                        longitude: longitude || null,
+                        timezone_offset: timezoneOffset || null,
                         updated_at: new Date().toISOString()
                     },
                     {
@@ -49,6 +52,7 @@ class UserService {
             throw error;
         }
     }
+
 
     /**
      * Find user by wallet address

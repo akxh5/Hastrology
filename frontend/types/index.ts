@@ -3,7 +3,11 @@ export interface BirthDetails {
     dob: string;
     birthTime: string;
     birthPlace: string;
+    latitude: number;
+    longitude: number;
+    timezoneOffset?: number;
 }
+
 
 // Card type identifiers
 export type CardType =

@@ -104,12 +104,16 @@ class HoroscopeController {
 
             logger.info('Payment verified, generating horoscope card', { walletAddress });
 
-            // Generate horoscope card using AI
+            // Generate horoscope card using AI with coordinates for CDO
             const card = await aiService.generateHoroscope({
                 dob: user.dob,
                 birthTime: user.birth_time,
-                birthPlace: user.birth_place
+                birthPlace: user.birth_place,
+                latitude: user.latitude,
+                longitude: user.longitude,
+                timezoneOffset: user.timezone_offset
             });
+
 
             // Save horoscope card to database (stored as single card object)
             const horoscope = await horoscopeService.saveHoroscope({

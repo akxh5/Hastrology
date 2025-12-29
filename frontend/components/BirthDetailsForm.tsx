@@ -4,6 +4,7 @@ import { FC, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
+import { geocodePlace, getTimezoneOffset } from '@/lib/geocoding';
 import { useStore } from '@/store/useStore';
 
 export const BirthDetailsForm: FC = () => {
@@ -16,6 +17,7 @@ export const BirthDetailsForm: FC = () => {
         birthPlace: ''
     });
     const [error, setError] = useState<string | null>(null);
+    const [isGeocoding, setIsGeocoding] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,12 +28,33 @@ export const BirthDetailsForm: FC = () => {
         }
 
         setError(null);
-        setLoading(true);
+        setIsGeocoding(true);
 
         try {
+            // Step 1: Geocode the birth place
+            const geoResult = await geocodePlace(formData.birthPlace);
+
+            if (!geoResult.success) {
+                setError(geoResult.error || 'Could not find location. Please try a more specific place name (e.g., "New Delhi, India")');
+                setIsGeocoding(false);
+                return;
+            }
+
+            setIsGeocoding(false);
+            setLoading(true);
+
+            // Step 2: Calculate timezone offset
+            const timezoneOffset = getTimezoneOffset(formData.birthPlace, geoResult.longitude);
+
+            // Step 3: Register user with geocoded coordinates
             const result = await api.registerUser({
                 walletAddress: publicKey.toBase58(),
-                ...formData
+                dob: formData.dob,
+                birthTime: formData.birthTime,
+                birthPlace: formData.birthPlace,
+                latitude: geoResult.latitude,
+                longitude: geoResult.longitude,
+                timezoneOffset: timezoneOffset
             });
 
             setUser(result.user);
@@ -41,11 +64,13 @@ export const BirthDetailsForm: FC = () => {
         } catch (err: any) {
             setError(err.message || 'Failed to register. Please try again.');
         } finally {
+            setIsGeocoding(false);
             setLoading(false);
         }
     };
 
     const isFormValid = formData.dob && formData.birthTime && formData.birthPlace;
+    const isSubmitting = isGeocoding;
 
     return (
         <section id="birth-form" className="min-h-screen flex items-center justify-center py-20 px-4 relative">
@@ -115,6 +140,9 @@ export const BirthDetailsForm: FC = () => {
                                 onChange={(e) => setFormData(prev => ({ ...prev, birthPlace: e.target.value }))}
                                 className="w-full px-5 py-4 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-600 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all outline-none hover:bg-slate-900/70"
                             />
+                            <p className="text-xs text-slate-500 mt-2 ml-1">
+                                📍 Enter city and country for accurate cosmic alignment
+                            </p>
                         </div>
 
                         {error && (
@@ -125,10 +153,17 @@ export const BirthDetailsForm: FC = () => {
 
                         <button
                             type="submit"
-                            disabled={!isFormValid || !publicKey}
+                            disabled={!isFormValid || !publicKey || isSubmitting}
                             className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-slate-700 disabled:to-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-bold text-lg rounded-xl transition-all duration-300 shadow-lg shadow-purple-900/20 hover:shadow-purple-600/40 hover:-translate-y-1 active:translate-y-0"
                         >
-                            Continue Journey →
+                            {isGeocoding ? (
+                                <span className="flex items-center justify-center gap-2">
+                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                    Locating your stars...
+                                </span>
+                            ) : (
+                                'Continue Journey →'
+                            )}
                         </button>
                     </form>
 
