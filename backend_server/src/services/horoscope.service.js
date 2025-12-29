@@ -153,11 +153,23 @@ class HoroscopeService {
             const todayHoroscope = await this.getHoroscope(walletAddress);
 
             if (todayHoroscope && todayHoroscope.cards) {
-                return {
-                    status: 'exists',
-                    cards: todayHoroscope.cards,
-                    date: todayHoroscope.date
-                };
+                const cardData = todayHoroscope.cards;
+                // Handle both old format (dict of cards) and new format (single card)
+                if (cardData.front && cardData.back) {
+                    // New format: single card
+                    return {
+                        status: 'exists',
+                        card: cardData,
+                        date: todayHoroscope.date
+                    };
+                } else {
+                    // Old format: dict of cards (backwards compatibility)
+                    return {
+                        status: 'exists',
+                        cards: cardData,
+                        date: todayHoroscope.date
+                    };
+                }
             }
 
             return {

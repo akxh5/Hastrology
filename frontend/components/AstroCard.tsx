@@ -1,154 +1,213 @@
-'use client';
-
-import { FC } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CardType, AstroCard as AstroCardType, CARD_COLORS } from '@/types';
+import { AstroCardWithMeta } from '@/types';
 
 interface AstroCardProps {
-    card: AstroCardType;
-    cardType: CardType;
+    card: AstroCardWithMeta;
     index: number;
-    isActive?: boolean;
-    onShare?: () => void;
+    isActive: boolean;
+    totalCards: number;
+    onSwipe: (direction: 'left' | 'right') => void;
 }
 
-export const AstroCard: FC<AstroCardProps> = ({
+export const AstroCard: React.FC<AstroCardProps> = ({
     card,
-    cardType,
     index,
-    isActive = true,
-    onShare
+    isActive,
+    totalCards,
+    onSwipe
 }) => {
-    const colorConfig = CARD_COLORS[cardType];
+    const [isFlipped, setIsFlipped] = useState(false);
 
-    const handleShare = async () => {
-        if (onShare) {
-            onShare();
-            return;
+    // Calculate stacking effect
+    const stackOffset = index * 4;
+    const scale = 1 - (index * 0.05);
+    const zIndex = totalCards - index;
+    const opacity = 1 - (index * 0.2);
+
+    // Gestures
+    const handleDragEnd = (event: any, info: any) => {
+        if (info.offset.x > 100) {
+            onSwipe('right');
+        } else if (info.offset.x < -100) {
+            onSwipe('left');
         }
+    };
 
-        // Default share behavior - copy to clipboard
-        const shareText = `${card.tagline}\n\n✨ ${card.content} ✨\n\n${card.footer}\n\n🔮 Get your daily astro at hastrology.xyz`;
-
-        try {
-            if (navigator.share) {
-                await navigator.share({
-                    title: card.title,
-                    text: shareText,
-                });
-            } else {
-                await navigator.clipboard.writeText(shareText);
-                // Could show a toast here
-            }
-        } catch (err) {
-            console.error('Share failed:', err);
+    const handleFlip = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isActive) {
+            setIsFlipped(!isFlipped);
         }
     };
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{
-                opacity: isActive ? 1 : 0.3,
-                scale: isActive ? 1 : 0.85,
-                y: 0
-            }}
-            transition={{
-                duration: 0.5,
-                delay: index * 0.05,
-                ease: [0.16, 1, 0.3, 1]
-            }}
-            className="astro-card relative w-full max-w-md mx-auto"
+            className="absolute top-0 w-full h-full cursor-pointer perspective-1000"
             style={{
-                aspectRatio: '9/16',
-                maxHeight: '70vh'
+                zIndex,
+                y: stackOffset,
+                scale,
+                opacity: Math.max(0, opacity),
+                transformOrigin: 'top center',
             }}
+            animate={{
+                scale: isActive ? 1 : scale,
+                y: isActive ? 0 : stackOffset,
+                opacity: isActive ? 1 : Math.max(0, opacity),
+                rotate: isActive ? 0 : (index % 2 === 0 ? 2 : -2) // Slight random rotation for stack
+            }}
+            drag={isActive ? "x" : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.7}
+            onDragEnd={handleDragEnd}
+            onClick={handleFlip}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
-            {/* Card Background with Gradient */}
-            <div
-                className="absolute inset-0 rounded-3xl overflow-hidden"
-                style={{ background: colorConfig.gradient }}
+            <motion.div
+                className="w-full h-full relative preserve-3d"
+                initial={false}
+                animate={{ rotateY: isFlipped ? 180 : 0 }}
+                transition={{ duration: 0.6 }}
+                style={{ transformStyle: 'preserve-3d' }}
             >
-                {/* Decorative Elements */}
-                <div className="absolute inset-0 opacity-20">
-                    <div className="absolute top-10 right-10 w-32 h-32 rounded-full blur-3xl bg-white/30" />
-                    <div className="absolute bottom-20 left-10 w-24 h-24 rounded-full blur-2xl bg-black/20" />
-                </div>
-
-                {/* Noise Texture Overlay */}
+                {/* FRONT FACE */}
                 <div
-                    className="absolute inset-0 opacity-[0.03]"
+                    className="absolute w-full h-full backface-hidden rounded-[2rem] p-6 flex flex-col justify-between shadow-2xl border border-white/10"
                     style={{
-                        backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")'
+                        background: card.gradient,
+                        boxShadow: `0 20px 40px -10px ${card.color}40`,
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden'
                     }}
-                />
-            </div>
-
-            {/* Card Content */}
-            <div className="relative h-full flex flex-col justify-between p-8 text-white">
-                {/* Top Section - Card Number & Title */}
-                <div>
-                    <div className="flex items-center gap-3 mb-4">
-                        <span className="text-lg font-bold opacity-60">
-                            {String(index + 1).padStart(2, '0')}
-                        </span>
-                        <div className="h-px flex-1 bg-white/20" />
+                >
+                    {/* Header */}
+                    <div className="flex justify-between items-start">
+                        <div className="bg-black/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-white/90 uppercase tracking-wider border border-white/10">
+                            {card.type.replace('_', ' ')}
+                        </div>
+                        <div className="flex flex-col items-end">
+                            <span className="text-4xl filter drop-shadow-md">{card.front.energy_emoji}</span>
+                            <span className="text-[10px] text-white/60 font-mono mt-1 uppercase tracking-widest opacity-80">{card.front.zodiac_sign}</span>
+                        </div>
                     </div>
 
-                    <h2 className="text-sm font-bold tracking-[0.3em] uppercase opacity-80 mb-2">
-                        {card.title}
-                    </h2>
+                    {/* Main Content */}
+                    <div className="flex-1 flex flex-col justify-center my-4 space-y-6 text-center">
+                        <div className="space-y-2">
+                            <div className="text-xs uppercase tracking-[0.2em] text-white/60 font-medium">Current Vibe</div>
+                            <div className="text-3xl font-bold text-white leading-tight tracking-tight drop-shadow-sm">
+                                {card.front.vibe_status}
+                            </div>
+                        </div>
 
-                    <p className="text-lg font-medium opacity-70 leading-relaxed">
-                        {card.tagline}
-                    </p>
+                        <div className="space-y-2">
+                            <div className="text-xs uppercase tracking-[0.2em] text-white/60 font-medium">The Message</div>
+                            <h3 className="text-2xl font-medium text-white/95 leading-snug italic">
+                                "{card.front.tagline}"
+                            </h3>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="bg-black/20 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] uppercase tracking-wider text-white/60">Luck Score</span>
+                            <span className="text-xl font-bold text-white">{card.front.luck_score}%</span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                            <span className="text-[10px] uppercase tracking-wider text-white/60">Tap to flip</span>
+                            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center mt-1">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/80">
+                                    <path d="M21 12l-9-9-9 9" transform="rotate(90 12 12)" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Middle Section - Main Content */}
-                <div className="flex-1 flex items-center justify-center py-10">
-                    <motion.p
-                        className="text-3xl md:text-4xl font-bold text-center leading-tight"
-                        style={{ textShadow: '0 2px 20px rgba(0,0,0,0.3)' }}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 + index * 0.05 }}
-                    >
-                        {card.content}
-                    </motion.p>
-                </div>
+                {/* BACK FACE */}
+                <div
+                    className="absolute w-full h-full backface-hidden rounded-[2rem] p-6 flex flex-col shadow-2xl border border-white/10 overflow-hidden"
+                    style={{
+                        background: '#0F0F11', // Dark card for reverse
+                        transform: "rotateY(180deg)",
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden',
+                        boxShadow: `0 20px 40px -10px ${card.color}20`,
+                    }}
+                >
+                    {/* Decorative Gradient Blob */}
+                    <div
+                        className="absolute top-[-20%] right-[-20%] w-[80%] h-[60%] rounded-full blur-[80px] opacity-20 pointer-events-none"
+                        style={{ background: card.color }}
+                    />
 
-                {/* Bottom Section - Footer & Share */}
-                <div className="space-y-4">
-                    <p className="text-sm opacity-50 text-center">
-                        {card.footer}
-                    </p>
-
-                    {/* Share Button */}
-                    <button
-                        onClick={handleShare}
-                        className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 
-                                   backdrop-blur-sm border border-white/20 
-                                   text-white font-semibold text-sm
-                                   transition-all duration-300 hover:scale-[1.02]
-                                   flex items-center justify-center gap-2"
-                    >
-                        <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+                    {/* Header */}
+                    <div className="flex justify-between items-center mb-6 relative z-10">
+                        <div className="text-xs font-medium text-white/40 uppercase tracking-widest">
+                            Cosmic Download
+                        </div>
+                        <div
+                            className="bg-white/5 backdrop-blur-md w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
                         >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                            />
-                        </svg>
-                        Share Card
-                    </button>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/60">
+                                <path d="M19 12H5M12 19l-7-7 7-7" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* Scrollable Content Area */}
+                    <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar relative z-10 space-y-6">
+                        {/* Detailed Reading */}
+                        <div className="space-y-2">
+                            <h4 className="text-sm font-semibold text-white/90 flex items-center gap-2">
+                                <span className="" style={{ color: card.color }}>★</span> Insight
+                            </h4>
+                            <p className="text-sm leading-relaxed text-white/70 font-light">
+                                {card.back.detailed_reading}
+                            </p>
+                        </div>
+
+                        {/* Hustle Alpha */}
+                        <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-white/50">Hustle Alpha</h4>
+                            <p className="text-sm text-white/90 font-medium">
+                                {card.back.hustle_alpha}
+                            </p>
+                        </div>
+
+                        {/* Shadow Warning */}
+                        <div className="space-y-1">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-red-400/80 flex items-center gap-2">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                                Shadow Warning
+                            </h4>
+                            <p className="text-xs text-white/60 italic">
+                                {card.back.shadow_warning}
+                            </p>
+                        </div>
+
+                        {/* Lucky Assets Grid */}
+                        <div className="grid grid-cols-3 gap-2">
+                            <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
+                                <div className="text-[10px] text-white/40 uppercase">Number</div>
+                                <div className="text-sm font-bold text-white mt-1">{card.back.lucky_assets.number}</div>
+                            </div>
+                            <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
+                                <div className="text-[10px] text-white/40 uppercase">Color</div>
+                                <div className="text-sm font-bold text-white mt-1" style={{ color: card.back.lucky_assets.color === 'Gold' ? '#FCD34D' : 'white' }}>
+                                    {card.back.lucky_assets.color}
+                                </div>
+                            </div>
+                            <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
+                                <div className="text-[10px] text-white/40 uppercase">Power Hr</div>
+                                <div className="text-sm font-bold text-white mt-1">{card.back.lucky_assets.power_hour}</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </motion.div>
         </motion.div>
     );
 };

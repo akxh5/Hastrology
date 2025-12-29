@@ -12,9 +12,9 @@ class AIService {
     }
 
     /**
-     * Generate horoscope cards using AI server
+     * Generate horoscope card using AI server
      * @param {Object} birthDetails - User's birth details
-     * @returns {Promise<Object>} Generated horoscope cards
+     * @returns {Promise<Object>} Generated horoscope card (single card)
      */
     async generateHoroscope({ dob, birthTime, birthPlace }) {
         try {
@@ -35,13 +35,13 @@ class AIService {
                 }
             );
 
-            // New response format: { cards: {...}, cached: bool }
-            if (!response.data || !response.data.cards) {
+            // New response format: { card: {...}, cached: bool }
+            if (!response.data || !response.data.card) {
                 throw new Error('Invalid response from AI server');
             }
 
-            logger.info('Horoscope cards generated successfully');
-            return response.data.cards;
+            logger.info('Horoscope card generated successfully');
+            return response.data.card;
         } catch (error) {
             if (error.code === 'ECONNREFUSED') {
                 logger.error('AI server is not running or not reachable');

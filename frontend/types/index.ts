@@ -19,14 +19,43 @@ export type CardType =
     | 'wild_card';
 
 // Individual astro card structure
-export interface AstroCard {
-    title: string;
-    tagline: string;
-    content: string;
-    footer: string;
+// Breakdown of the new card structure
+export interface LuckyAssets {
+    number: string;
+    color: string;
+    power_hour: string;
 }
 
-// Cards data from API
+export interface TelescopeCardFront {
+    tagline: string;
+    luck_score: number;
+    vibe_status: string;
+    energy_emoji: string;
+    zodiac_sign: string;
+}
+
+export interface TelescopeCardBack {
+    detailed_reading: string;
+    hustle_alpha: string;
+    shadow_warning: string;
+    lucky_assets: LuckyAssets;
+}
+
+// Complete astro card structure
+export interface AstroCard {
+    front: TelescopeCardFront;
+    back: TelescopeCardBack;
+    ruling_planet_theme: string;
+}
+
+// Single card response from API
+export interface AstroCardResponse {
+    card: AstroCard;
+    date?: string;
+    cached?: boolean;
+}
+
+// Legacy cards data from API (for backwards compatibility)
 export interface AstroCardsData {
     cards: Record<CardType, AstroCard>;
     cached?: boolean;
@@ -68,14 +97,15 @@ export const CARD_ORDER: CardType[] = [
 ];
 
 export interface HoroscopeStatus {
-    status: 'new_user' | 'clear_to_pay' | 'exists';
+    status: 'new_user' | 'clear_to_pay' | 'paid' | 'exists';
     horoscope?: string;
-    cards?: Record<CardType, AstroCard>;
+    card?: AstroCard;  // New format: single card
+    cards?: Record<CardType, AstroCard>;  // Old format: backwards compatibility
     date?: string;
 }
 
 export interface HoroscopeResponse {
-    cards: Record<CardType, AstroCard>;
+    card: AstroCard;  // New format: single card
     date?: string;
 }
 
@@ -93,11 +123,13 @@ export interface User {
 export interface AppState {
     wallet: string | null;
     user: User | null;
-    cards: Record<CardType, AstroCard> | null;
+    card: AstroCard | null;  // New format: single card
+    cards: Record<CardType, AstroCard> | null;  // Old format: backwards compatibility
     loading: boolean;
     setWallet: (wallet: string | null) => void;
     setUser: (user: User | null) => void;
-    setCards: (cards: Record<CardType, AstroCard> | null) => void;
+    setCard: (card: AstroCard | null) => void;  // New setter for single card
+    setCards: (cards: Record<CardType, AstroCard> | null) => void;  // Old setter: backwards compatibility
     setLoading: (loading: boolean) => void;
     reset: () => void;
 }

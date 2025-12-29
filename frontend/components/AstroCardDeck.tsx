@@ -108,12 +108,24 @@ export const AstroCardDeck: FC<AstroCardDeckProps> = ({ cards, onComplete }) => 
                         onDragEnd={handleDragEnd}
                         className="absolute inset-0"
                     >
-                        <AstroCard
-                            card={currentCard}
-                            cardType={currentCardType}
-                            index={currentIndex}
-                            isActive={true}
-                        />
+                        {/* Safeguard against missing card data */}
+                        {currentCard ? (
+                            <AstroCard
+                                card={{
+                                    ...currentCard,
+                                    type: currentCardType,
+                                    ...CARD_COLORS[currentCardType]
+                                }}
+                                index={currentIndex}
+                                isActive={true}
+                                totalCards={cardTypes.length}
+                                onSwipe={(dir) => dir === 'left' ? goToNext() : goToPrev()}
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-white/50">
+                                <p>Card Unavailable</p>
+                            </div>
+                        )}
                     </motion.div>
                 </AnimatePresence>
             </div>
@@ -131,10 +143,10 @@ export const AstroCardDeck: FC<AstroCardDeckProps> = ({ cards, onComplete }) => 
                         >
                             <div
                                 className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === currentIndex
-                                        ? 'w-6 bg-white'
-                                        : idx < currentIndex
-                                            ? 'bg-white/40'
-                                            : 'bg-white/20'
+                                    ? 'w-6 bg-white'
+                                    : idx < currentIndex
+                                        ? 'bg-white/40'
+                                        : 'bg-white/20'
                                     }`}
                                 style={idx === currentIndex ? { backgroundColor: CARD_COLORS[type].color } : {}}
                             />

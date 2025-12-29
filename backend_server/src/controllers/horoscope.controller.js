@@ -28,8 +28,19 @@ class HoroscopeController {
                 return successResponse(res, { status: 'new_user' });
             }
 
-            // Get horoscope status
+            // Get horoscope status from service (checks DB first)
             const status = await horoscopeService.getHoroscopeStatus(walletAddress);
+
+            // If not found in DB, check on-chain lottery participation
+            if (status.status === 'clear_to_pay') {
+                const hasParticipated = await solanaService.verifyLotteryParticipation(walletAddress);
+                if (hasParticipated) {
+                    return successResponse(res, {
+                        status: 'paid',
+                        message: 'Payment verified. Ready to generate.'
+                    });
+                }
+            }
 
             return successResponse(res, status);
         } catch (error) {
@@ -53,15 +64,27 @@ class HoroscopeController {
                 return errorResponse(res, 'User not found. Please register first.', 404);
             }
 
-            // Check if horoscope cards already exist for today
+            // Check if horoscope card already exists for today
             const existingHoroscope = await horoscopeService.getHoroscope(walletAddress);
 
             if (existingHoroscope && existingHoroscope.cards) {
-                return successResponse(res, {
-                    message: 'Horoscope already generated for today',
-                    cards: existingHoroscope.cards,
-                    date: existingHoroscope.date
-                });
+                // Handle both old format (dict of cards) and new format (single card)
+                const cardData = existingHoroscope.cards;
+                // If it's a single card object (has front/back), return as card
+                // Otherwise return as cards for backwards compatibility
+                if (cardData.front && cardData.back) {
+                    return successResponse(res, {
+                        message: 'Horoscope already generated for today',
+                        card: cardData,
+                        date: existingHoroscope.date
+                    });
+                } else {
+                    return successResponse(res, {
+                        message: 'Horoscope already generated for today',
+                        cards: cardData,
+                        date: existingHoroscope.date
+                    });
+                }
             }
 
             // Verify lottery participation via on-chain PDA
@@ -79,25 +102,25 @@ class HoroscopeController {
 
             logger.info('Payment/Lottery entry verified for:', { walletAddress, signature });
 
-            logger.info('Payment verified, generating horoscope cards', { walletAddress });
+            logger.info('Payment verified, generating horoscope card', { walletAddress });
 
-            // Generate horoscope cards using AI
-            const cards = await aiService.generateHoroscope({
+            // Generate horoscope card using AI
+            const card = await aiService.generateHoroscope({
                 dob: user.dob,
                 birthTime: user.birth_time,
                 birthPlace: user.birth_place
             });
 
-            // Save horoscope cards to database
+            // Save horoscope card to database (stored as single card object)
             const horoscope = await horoscopeService.saveHoroscope({
                 walletAddress,
-                cards
+                cards: card  // Store as single card, backend service expects 'cards' key
             });
 
-            logger.info('Horoscope cards generated and saved', { walletAddress });
+            logger.info('Horoscope card generated and saved', { walletAddress });
 
             return successResponse(res, {
-                cards: cards,
+                card: card,
                 date: horoscope.date
             });
         } catch (error) {

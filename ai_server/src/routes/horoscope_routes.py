@@ -19,13 +19,13 @@ router = APIRouter()
 )
 async def generate_horoscope(request: HoroscopeRequest):
     """
-    Generate personalized horoscope cards based on birth details.
+    Generate personalized horoscope card (single card) based on birth details.
     
     Args:
         request: HoroscopeRequest containing dob, birth_time, and birth_place
         
     Returns:
-        HoroscopeResponse with 10 structured astro cards
+        HoroscopeResponse with a single structured astro card
         
     Raises:
         HTTPException: If horoscope generation fails
@@ -33,20 +33,17 @@ async def generate_horoscope(request: HoroscopeRequest):
     try:
         logger.info(f"Received horoscope request for DOB: {request.dob}")
         
-        cards_data, was_cached = await horoscope_service.generate_horoscope(
+        card_data, was_cached = await horoscope_service.generate_horoscope(
             dob=request.dob,
             birth_time=request.birth_time,
             birth_place=request.birth_place
         )
         
-        # Convert raw card data to AstroCard models
-        cards = {
-            card_type: AstroCard(**card_data) 
-            for card_type, card_data in cards_data.items()
-        }
+        # Convert raw card data to AstroCard model
+        card = AstroCard(**card_data)
         
         return HoroscopeResponse(
-            cards=cards,
+            card=card,
             cached=was_cached
         )
         
