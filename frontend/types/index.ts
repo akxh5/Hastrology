@@ -155,6 +155,9 @@ export interface User {
 	createdAt: string;
 	username?: string;
 	zodiacSign?: string;
+	twitterId?: string;
+	twitterProfileUrl?: string;
+	twitterUsername?: string;
 }
 
 export interface AppState {
@@ -169,4 +172,33 @@ export interface AppState {
 	setCards: (cards: Record<CardType, AstroCard> | null) => void; // Old setter: backwards compatibility
 	setLoading: (loading: boolean) => void;
 	reset: () => void;
+}
+
+export interface XDetails {
+	id: string;
+	twitterId: string;
+	twitterUsername: string;
+	twitterProfileUrl: string;
+}
+
+export interface TwitterUserData {
+	data: {
+		id: string;
+		name: string;
+		username: string;
+		profile_image_url: string;
+	};
+}
+
+export interface fetchUserInput {
+	code: string;
+	url: URL;
+	path: string;
+}
+
+export interface FetchUserResult {
+	userData: TwitterUserData;
+	accessToken: string;
+	refreshToken: string;
+	expiresIn: number;
 }

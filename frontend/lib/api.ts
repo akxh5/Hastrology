@@ -1,84 +1,115 @@
-import { BirthDetails, HoroscopeStatus, HoroscopeResponse, CardType, AstroCard } from '@/types';
+import {
+	AstroCard,
+	BirthDetails,
+	CardType,
+	HoroscopeResponse,
+	HoroscopeStatus,
+	XDetails,
+} from "@/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
 export const api = {
-    /**
-     * Get user profile by wallet address
-     */
-    async getUserProfile(walletAddress: string) {
-        const res = await fetch(`${API_BASE}/user/profile/${walletAddress}`);
+	/**
+	 * Get user profile by wallet address
+	 */
+	async getUserProfile(walletAddress: string) {
+		const res = await fetch(`${API_BASE}/user/profile/${walletAddress}`);
 
-        if (!res.ok) {
-            if (res.status === 404) {
-                return null; // User not found
-            }
-            throw new Error('Failed to get user profile');
-        }
+		if (!res.ok) {
+			if (res.status === 404) {
+				return null; // User not found
+			}
+			throw new Error("Failed to get user profile");
+		}
 
-        return res.json();
-    },
+		return res.json();
+	},
 
-    /**
-     * Register a new user with birth details
-     */
-    async registerUser(data: BirthDetails) {
-        const res = await fetch(`${API_BASE}/user/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
+	/**
+	 * Register a new user with birth details
+	 */
+	async registerUser(data: BirthDetails) {
+		const res = await fetch(`${API_BASE}/user/register`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(data),
+		});
 
-        if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.message || 'Failed to register user');
-        }
+		if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.message || "Failed to register user");
+		}
 
-        return res.json();
-    },
+		return res.json();
+	},
 
-    /**
-     * Check horoscope status for a wallet
-     */
-    async getStatus(walletAddress: string): Promise<HoroscopeStatus> {
-        const res = await fetch(`${API_BASE}/horoscope/status?walletAddress=${walletAddress}`);
+	/**
+	 * Check horoscope status for a wallet
+	 */
+	async getStatus(walletAddress: string): Promise<HoroscopeStatus> {
+		const res = await fetch(
+			`${API_BASE}/horoscope/status?walletAddress=${walletAddress}`,
+		);
 
-        if (!res.ok) {
-            throw new Error('Failed to get horoscope status');
-        }
+		if (!res.ok) {
+			throw new Error("Failed to get horoscope status");
+		}
 
-        return res.json();
-    },
+		return res.json();
+	},
 
-    /**
-     * Confirm payment and generate horoscope cards
-     */
-    async confirmHoroscope(walletAddress: string, signature: string): Promise<HoroscopeResponse> {
-        const res = await fetch(`${API_BASE}/horoscope/confirm`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ walletAddress, signature })
-        });
+	/**
+	 * Confirm payment and generate horoscope cards
+	 */
+	async confirmHoroscope(
+		walletAddress: string,
+		signature: string,
+	): Promise<HoroscopeResponse> {
+		const res = await fetch(`${API_BASE}/horoscope/confirm`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ walletAddress, signature }),
+		});
 
-        if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.message || 'Failed to generate horoscope');
-        }
+		if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.message || "Failed to generate horoscope");
+		}
 
-        return res.json();
-    },
+		return res.json();
+	},
 
-    /**
-     * Get horoscope history
-     */
-    async getHistory(walletAddress: string, limit = 10) {
-        const res = await fetch(`${API_BASE}/horoscope/history/${walletAddress}?limit=${limit}`);
+	/**
+	 * Get horoscope history
+	 */
+	async getHistory(walletAddress: string, limit = 10) {
+		const res = await fetch(
+			`${API_BASE}/horoscope/history/${walletAddress}?limit=${limit}`,
+		);
 
-        if (!res.ok) {
-            throw new Error('Failed to get horoscope history');
-        }
+		if (!res.ok) {
+			throw new Error("Failed to get horoscope history");
+		}
 
-        return res.json();
-    }
+		return res.json();
+	},
+
+	/**
+	 * Add twitter details to an existing user
+	 */
+	async regsiterX(data: XDetails) {
+		const res = await fetch(`${API_BASE}/user/x-account`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(data),
+		});
+
+		if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.message || "Failed to register user X account");
+		}
+
+		return res.json();
+	},
 };
-

@@ -83,8 +83,37 @@ const horoscopeConfirmSchema = Joi.object({
   }),
 });
 
+/**
+ * X account creation validation schema
+ */
+const xAccountCreationSchema = Joi.object({
+  id: Joi.string()
+    .required()
+    .messages({
+      "string.pattern.base": "Invalid User ID",
+      "string.empty": "User ID is required",
+      "any.required": "User ID is required",
+    }),
+
+  twitterId: Joi.string().required().min(1).messages({
+    "string.empty": "Twitter id is required",
+    "any.required": "Twitter Id is required",
+  }),
+
+  twitterUsername: Joi.string().required().min(1).messages({
+    "string.empty": "Twitter Username is required",
+    "any.required": "Twitter Username is required",
+  }),
+
+  twitterProfileUrl: Joi.string().required().min(1).messages({
+    "string.empty": "Twitter Profile Url is required",
+    "any.required": "Twitter Profile Url is required",
+  }),
+});
+
 module.exports = {
   validate,
   validateUserRegistration: validate(userRegistrationSchema),
   validateHoroscopeConfirm: validate(horoscopeConfirmSchema),
+  validateTwitterConfirm: validate(xAccountCreationSchema),
 };

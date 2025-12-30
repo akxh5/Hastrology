@@ -92,6 +92,9 @@ class UserController {
           birthPlace: user.birth_place,
           latitude: user.latitude,
           longitude: user.longitude,
+          twitterId: user.twitter_id,
+          twitterUsername: user.twitter_username,
+          twitterProfileUrl: user.twitter_profile_url,
           timezoneOffset: user.timezone_offset,
           createdAt: user.created_at,
           username: user.username,
@@ -99,6 +102,51 @@ class UserController {
       });
     } catch (error) {
       logger.error("Get profile controller error:", error);
+      next(error);
+    }
+  }
+
+  /**
+   * Register a user X account
+   * @route POST /api/user/x-account
+   */
+  async registerX(req, res, next) {
+    try {
+      const { id, twitterId, twitterUsername, twitterProfileUrl } = req.body;
+
+      if (!id || (!twitterId && !twitterUsername && !twitterProfileUrl)) {
+        return res.status(400).json({
+          success: false,
+          message: "User id and X account details are required",
+        });
+      }
+
+      const user = await userService.registerXAccount({
+        userId: id,
+        twitterId,
+        twitterUsername,
+        twitterProfileUrl,
+      });
+
+      return successResponse(
+        res,
+        {
+          message: "User X account linked successfully",
+          user: {
+            id: user.id,
+            walletAddress: user.wallet_address,
+            dob: user.dob,
+            createdAt: user.created_at,
+            username: user.username,
+            twitterId: user.twitter_id,
+            twitterUsername: user.twitter_username,
+            twitterProfileUrl: user.twitter_profile_url,
+          },
+        },
+        200
+      );
+    } catch (error) {
+      logger.error("Register X controller error:", error);
       next(error);
     }
   }

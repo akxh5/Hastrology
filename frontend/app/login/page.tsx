@@ -23,11 +23,9 @@ const LoginPage: FC = () => {
 	const [formStep, setFormStep] = useState<FormStep>("initial");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const hasCheckedProfileRef = useRef(false);
-	const wasAuthenticatedRef = useRef(false);
 	const [userState, setUserState] = useState<"unknown" | "new" | "existing">(
 		"unknown",
 	);
-
 	const { setWallet, setUser, reset, setLoading, user } = useStore();
 	const [isGeocoding, setIsGeocoding] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -47,8 +45,6 @@ const LoginPage: FC = () => {
 				setError(null);
 				return;
 			}
-
-			// Only check once per connection
 			if (hasCheckedProfileRef.current) return;
 			hasCheckedProfileRef.current = true;
 
@@ -177,7 +173,7 @@ const LoginPage: FC = () => {
 			}
 
 			setUser(updatedUser.user);
-			router.push("/cards");
+			router.push("/link-x");
 		} catch (err) {
 			console.error("Birth details submission failed:", err);
 			setError("Failed to save birth details. Please try again.");

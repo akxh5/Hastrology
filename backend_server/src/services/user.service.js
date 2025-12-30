@@ -64,6 +64,48 @@ class UserService {
   }
 
   /**
+   * Update user's X (Twitter) account details
+   * @param {Object} params
+   * @param {string} params.userId - User UUID
+   * @param {string} params.twitterId - X user ID
+   * @param {string} params.twitterUsername - X username
+   * @returns {Promise<Object>} Updated user
+   */
+  async registerXAccount({
+    userId,
+    twitterId,
+    twitterUsername,
+    twitterProfileUrl,
+  }) {
+    try {
+      logger.info("Updating X account for user:", { userId });
+
+      const { data, error } = await this.supabase
+        .from("users")
+        .update({
+          twitter_id: twitterId,
+          twitter_username: twitterUsername,
+          twitter_profile_url: twitterProfileUrl,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", userId)
+        .select()
+        .single();
+
+      if (error) {
+        logger.error("X account update error:", error);
+        throw error;
+      }
+
+      logger.info("X account updated successfully:", { userId });
+      return data;
+    } catch (error) {
+      logger.error("User service error:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Find user by wallet address
    * @param {string} walletAddress - User's wallet address
    * @returns {Promise<Object|null>} User object or null

@@ -1,7 +1,10 @@
-const express = require('express');
-const userController = require('../controllers/user.controller');
-const { validateUserRegistration } = require('../middleware/validation');
-const { authLimiter } = require('../middleware/rateLimiter');
+const express = require("express");
+const userController = require("../controllers/user.controller");
+const {
+  validateUserRegistration,
+  validateTwitterConfirm,
+} = require("../middleware/validation");
+const { authLimiter } = require("../middleware/rateLimiter");
 
 const router = express.Router();
 
@@ -11,10 +14,22 @@ const router = express.Router();
  * @access  Public
  */
 router.post(
-    '/register',
-    authLimiter,
-    validateUserRegistration,
-    userController.register
+  "/register",
+  authLimiter,
+  validateUserRegistration,
+  userController.register
+);
+
+/**
+ * @route   POST /api/user/x-account
+ * @desc    Link X (Twitter) account to an existing user
+ * @access  Private
+ */
+router.post(
+  "/x-account",
+  authLimiter,
+  validateTwitterConfirm,
+  userController.registerX
 );
 
 /**
@@ -22,9 +37,6 @@ router.post(
  * @desc    Get user profile by wallet address
  * @access  Public
  */
-router.get(
-    '/profile/:walletAddress',
-    userController.getProfile
-);
+router.get("/profile/:walletAddress", userController.getProfile);
 
 module.exports = router;

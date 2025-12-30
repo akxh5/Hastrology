@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import { AstroCard } from "@/components/AstroCard";
+import { UserXDetails } from "@/components/TwitterDetails";
 import { api } from "@/lib/api";
 import { buildEnterLotteryInstruction } from "@/lib/hastrology_program";
 import { useStore } from "@/store/useStore";
@@ -112,6 +113,7 @@ const CardsPage: FC = () => {
 
 	return (
 		<section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black">
+			{user.twitterId && <UserXDetails />}
 			{/* Disconnect Button */}
 			<div className="fixed top-6 right-6 z-50">
 				<button
