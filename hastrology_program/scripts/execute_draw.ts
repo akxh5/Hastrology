@@ -13,7 +13,14 @@ import { PublicKey, SystemProgram, ComputeBudgetProgram, LAMPORTS_PER_SOL } from
 const VRF_QUEUE = new PublicKey("Cuj97ggrhhidhbu39TijNVqE74xvKJ69gDervRUXAxGh");
 
 async function main() {
-    // Configure the client to use devnet
+    // Configure the client to use devnet fallback if environment variables are missing
+    if (!process.env.ANCHOR_PROVIDER_URL) {
+        process.env.ANCHOR_PROVIDER_URL = "https://api.devnet.solana.com";
+    }
+    if (!process.env.ANCHOR_WALLET) {
+        process.env.ANCHOR_WALLET = process.env.HOME + "/.config/solana/id.json";
+    }
+
     const provider = anchor.AnchorProvider.env();
     anchor.setProvider(provider);
 
@@ -104,7 +111,7 @@ async function main() {
         [
             Buffer.from("user-ticket"),
             currentLotteryId.toArrayLike(Buffer, "le", 8),
-            new BN(winnerIndex).toArrayLike(Buffer, "le", 8),
+            new BN(winnerIndex - 1).toArrayLike(Buffer, "le", 8),
         ],
         program.programId
     );

@@ -206,6 +206,68 @@ export async function buildEnterLotteryInstruction(
 }
 
 /**
+ * UserTicket account structure
+ */
+export interface UserTicket {
+    user: PublicKey;
+    lotteryId: BN;
+    isWinner: boolean;
+    prizeAmount: BN;
+    isClaimed: boolean;
+}
+
+/**
+ * Decode UserTicket from account data
+ */
+export function decodeUserTicket(data: Buffer): UserTicket {
+    let offset = 8; // Skip 8-byte discriminator
+
+    const user = new PublicKey(data.slice(offset, offset + 32));
+    offset += 32;
+
+    const lotteryId = new BN(data.slice(offset, offset + 8), 'le');
+    offset += 8;
+
+    const isWinner = data.readUInt8(offset) === 1;
+    offset += 1;
+
+    // Use readBigUInt64LE for strict 8-byte uint reading if possible,
+    // or manually slice for BN if specific endianness/size handling is needed.
+    // BN can read from buffer directly too, but let's be consistent.
+    const prizeAmount = new BN(data.slice(offset, offset + 8), 'le');
+    offset += 8;
+
+    const isClaimed = data.readUInt8(offset) === 1;
+    offset += 1;
+
+    return {
+        user,
+        lotteryId,
+        isWinner,
+        prizeAmount,
+        isClaimed,
+    };
+}
+
+/**
+ * Fetch and decode a UserTicket account
+ */
+export async function fetchUserTicket(
+    connection: Connection,
+    lotteryId: BN,
+    ticketNumber: BN
+): Promise<UserTicket | null> {
+    const [userTicketPDA] = getUserTicketPDA(lotteryId, ticketNumber);
+    const accountInfo = await connection.getAccountInfo(userTicketPDA);
+
+    if (!accountInfo) {
+        return null;
+    }
+
+    return decodeUserTicket(accountInfo.data as Buffer);
+}
+
+/**
  * Check if a user has already entered the current lottery
  */
 export async function hasUserEnteredLottery(

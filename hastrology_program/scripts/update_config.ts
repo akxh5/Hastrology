@@ -15,15 +15,22 @@
 
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
+import BN from "bn.js";
 import { PublicKey, LAMPORTS_PER_SOL, ComputeBudgetProgram } from "@solana/web3.js";
-import { HastrologyProgram } from "../target/types/hastrology_program";
 
 async function main() {
-    // Configure the client to use devnet
+    // Configure the client to use devnet fallback if environment variables are missing
+    if (!process.env.ANCHOR_PROVIDER_URL) {
+        process.env.ANCHOR_PROVIDER_URL = "https://api.devnet.solana.com";
+    }
+    if (!process.env.ANCHOR_WALLET) {
+        process.env.ANCHOR_WALLET = process.env.HOME + "/.config/solana/id.json";
+    }
+
     const provider = anchor.AnchorProvider.env();
     anchor.setProvider(provider);
 
-    const program = anchor.workspace.hastrologyProgram as Program<HastrologyProgram>;
+    const program = anchor.workspace.hastrologyProgram as Program<any>;
 
     // Derive LotteryState PDA
     const [lotteryStatePda] = PublicKey.findProgramAddressSync(
@@ -40,7 +47,7 @@ async function main() {
     console.log("");
 
     // Fetch current state
-    const stateBefore = await program.account.lotteryState.fetch(lotteryStatePda);
+    const stateBefore = await program.account["lotteryState"].fetch(lotteryStatePda);
 
     console.log("CURRENT CONFIG:");
     console.log("-".repeat(60));
@@ -60,14 +67,14 @@ async function main() {
     }
 
     // New values
-    const newTicketPrice = new anchor.BN(LAMPORTS_PER_SOL / 100); // 0.01 SOL = 10,000,000 lamports
+    const newTicketPrice = new BN(LAMPORTS_PER_SOL / 100); // 0.01 SOL = 10,000,000 lamports
 
     // Set lottery endtime to end of today (midnight UTC tomorrow)
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
     tomorrow.setUTCHours(0, 0, 0, 0);
-    const newLotteryEndtime = new anchor.BN(Math.floor(tomorrow.getTime() / 1000));
+    const newLotteryEndtime = new BN(Math.floor(tomorrow.getTime() / 1000));
 
     console.log("NEW CONFIG TO SET:");
     console.log("-".repeat(60));
@@ -104,7 +111,7 @@ async function main() {
         console.log("");
 
         // Verify the update
-        const stateAfter = await program.account.lotteryState.fetch(lotteryStatePda);
+        const stateAfter = await program.account["lotteryState"].fetch(lotteryStatePda);
 
         console.log("UPDATED CONFIG:");
         console.log("-".repeat(60));

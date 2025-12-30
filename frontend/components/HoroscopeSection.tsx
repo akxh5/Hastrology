@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { AstroCard } from './AstroCard';
+import { LotteryCountdown } from './LotteryCountdown';
 import { AstroCard as AstroCardType } from '@/types';
 import { buildEnterLotteryInstruction } from '@/lib/hastrology_program';
 
@@ -14,50 +15,50 @@ const PAYMENT_AMOUNT = 0.01; // SOL
 
 // Planetary theme configurations
 const getPlanetaryTheme = (planet: string) => {
-    const themes: Record<string, { 
-        gradient: string; 
-        glow: string; 
+    const themes: Record<string, {
+        gradient: string;
+        glow: string;
         accent: string;
         emoji: string;
     }> = {
-        sun: { 
-            gradient: 'from-amber-500/20 via-orange-500/10 to-yellow-500/20', 
+        sun: {
+            gradient: 'from-amber-500/20 via-orange-500/10 to-yellow-500/20',
             glow: 'shadow-[0_0_80px_rgba(251,146,60,0.3)]',
             accent: 'from-amber-400 to-orange-500',
             emoji: '☀️'
         },
-        moon: { 
-            gradient: 'from-blue-500/20 via-indigo-500/10 to-cyan-500/20', 
+        moon: {
+            gradient: 'from-blue-500/20 via-indigo-500/10 to-cyan-500/20',
             glow: 'shadow-[0_0_80px_rgba(59,130,246,0.3)]',
             accent: 'from-blue-400 to-indigo-500',
             emoji: '🌙'
         },
-        mars: { 
-            gradient: 'from-red-500/20 via-rose-500/10 to-orange-500/20', 
+        mars: {
+            gradient: 'from-red-500/20 via-rose-500/10 to-orange-500/20',
             glow: 'shadow-[0_0_80px_rgba(239,68,68,0.3)]',
             accent: 'from-red-500 to-rose-600',
             emoji: '🔥'
         },
-        mercury: { 
-            gradient: 'from-cyan-500/20 via-teal-500/10 to-blue-500/20', 
+        mercury: {
+            gradient: 'from-cyan-500/20 via-teal-500/10 to-blue-500/20',
             glow: 'shadow-[0_0_80px_rgba(6,182,212,0.3)]',
             accent: 'from-cyan-400 to-teal-500',
             emoji: '⚡'
         },
-        jupiter: { 
-            gradient: 'from-emerald-500/20 via-green-500/10 to-teal-500/20', 
+        jupiter: {
+            gradient: 'from-emerald-500/20 via-green-500/10 to-teal-500/20',
             glow: 'shadow-[0_0_80px_rgba(34,197,94,0.3)]',
             accent: 'from-emerald-400 to-green-500',
             emoji: '🌟'
         },
-        venus: { 
-            gradient: 'from-pink-500/20 via-rose-500/10 to-purple-500/20', 
+        venus: {
+            gradient: 'from-pink-500/20 via-rose-500/10 to-purple-500/20',
             glow: 'shadow-[0_0_80px_rgba(236,72,153,0.3)]',
             accent: 'from-pink-400 to-rose-500',
             emoji: '💖'
         },
-        saturn: { 
-            gradient: 'from-purple-500/20 via-violet-500/10 to-indigo-500/20', 
+        saturn: {
+            gradient: 'from-purple-500/20 via-violet-500/10 to-indigo-500/20',
             glow: 'shadow-[0_0_80px_rgba(147,51,234,0.3)]',
             accent: 'from-purple-400 to-violet-600',
             emoji: '🪐'
@@ -83,7 +84,7 @@ export const HoroscopeSection: FC = () => {
     const { connection } = useConnection();
     const { user, card, setCard, loading, setLoading } = useStore();
 
-    const [status, setStatus] = useState<'checking' | 'ready' | 'paying' | 'generating' | 'complete'>('checking');
+    const [status, setStatus] = useState<'checking' | 'ready' | 'paying' | 'generating' | 'complete' | 'lottery'>('checking');
     const [error, setError] = useState<string | null>(null);
     const [isPaid, setIsPaid] = useState(false);
 
@@ -164,10 +165,10 @@ export const HoroscopeSection: FC = () => {
     return (
         <section id="horoscope-section" className="min-h-screen flex items-center justify-center py-20 px-4 relative overflow-hidden">
             {/* Dynamic Planetary Background */}
-            <motion.div 
+            <motion.div
                 className="absolute inset-0 pointer-events-none"
                 animate={{
-                    background: status === 'complete' 
+                    background: status === 'complete'
                         ? `radial-gradient(circle at 50% 50%, ${theme.gradient.split(' ')[1].replace('from-', '').replace('/20', '/5')}, transparent 70%)`
                         : 'radial-gradient(circle at 50% 50%, rgba(147,51,234,0.05), transparent 70%)'
                 }}
@@ -191,7 +192,7 @@ export const HoroscopeSection: FC = () => {
                         >
                             {/* Cosmic Glow Effect */}
                             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-transparent to-pink-500/20 rounded-[3rem] blur-3xl"></div>
-                            
+
                             <div className="relative backdrop-blur-2xl bg-gradient-to-br from-white/5 via-white/[0.02] to-transparent border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl">
                                 {/* Decorative Elements */}
                                 <div className="absolute top-8 left-8 w-20 h-20 bg-purple-500/10 rounded-full blur-2xl animate-pulse"></div>
@@ -260,7 +261,7 @@ export const HoroscopeSection: FC = () => {
                                             {/* Animated Border Gradient */}
                                             <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 opacity-75 blur-sm group-hover:opacity-100 transition-opacity"></div>
                                             <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 animate-gradient"></div>
-                                            
+
                                             <div className="relative bg-[#0D0D15] rounded-2xl p-8 flex flex-col items-center gap-4">
                                                 {/* Label */}
                                                 <div className="flex items-center gap-2">
@@ -319,7 +320,7 @@ export const HoroscopeSection: FC = () => {
                             className="relative"
                         >
                             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-transparent to-pink-500/20 rounded-[3rem] blur-3xl animate-pulse"></div>
-                            
+
                             <div className="relative backdrop-blur-2xl bg-gradient-to-br from-white/5 via-white/[0.02] to-transparent border border-white/10 rounded-[3rem] p-16 text-center shadow-2xl">
                                 {/* Cosmic Loader */}
                                 <motion.div
@@ -340,8 +341,8 @@ export const HoroscopeSection: FC = () => {
                                 </motion.h3>
 
                                 <p className="text-slate-400 text-lg">
-                                    {status === 'paying' 
-                                        ? 'Please approve the transaction in your wallet' 
+                                    {status === 'paying'
+                                        ? 'Please approve the transaction in your wallet'
                                         : 'AI is crafting your personalized reading ✨'
                                     }
                                 </p>
@@ -385,7 +386,39 @@ export const HoroscopeSection: FC = () => {
                                 <AstroCard card={card} />
                             </motion.div>
 
-                           
+                            {/* Next Step Button */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 1.0 }}
+                                className="mt-8 pb-12"
+                            >
+                                <button
+                                    onClick={() => setStatus('lottery')}
+                                    className="group flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all hover:scale-105"
+                                >
+                                    <span className="text-purple-300 font-medium tracking-wide group-hover:text-purple-200">
+                                        Check Your Lottery Luck
+                                    </span>
+                                    <span className="text-xl group-hover:translate-x-1 transition-transform">
+                                        →
+                                    </span>
+                                </button>
+                            </motion.div>
+                        </motion.div>
+                    )}
+
+                    {/* LOTTERY COUNTDOWN STATE */}
+                    {status === 'lottery' && (
+                        <motion.div
+                            key="lottery"
+                            initial={{ opacity: 0, x: 100 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -100 }}
+                            transition={{ duration: 0.5 }}
+                            className="w-full"
+                        >
+                            <LotteryCountdown onBack={() => setStatus('complete')} />
                         </motion.div>
                     )}
                 </AnimatePresence>

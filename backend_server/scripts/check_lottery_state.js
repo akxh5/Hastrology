@@ -154,10 +154,62 @@ async function main() {
     console.log('Pot Vault Bump:', potVaultBump);
     console.log('');
     console.log('='.repeat(60));
-
-    // Validation checks
     console.log('VALIDATION:');
     console.log('-'.repeat(60));
+
+    // Check winner
+    if (winner > 0n) {
+        console.log(`✅ Winner identified: Ticket #${winner}`);
+
+        // Derive Winning Ticket PDA
+        const USER_TICKET_SEED = Buffer.from('user-ticket');
+
+        // Try current lottery ID first, then ID-1 (since payout increments the ID)
+        const idsToTry = [currentLotteryId, currentLotteryId - 1n];
+        let ticketAccount = null;
+        let foundId = 0n;
+
+        for (const id of idsToTry) {
+            if (id < 1n) continue;
+
+            const lotteryIdBuffer = Buffer.alloc(8);
+            lotteryIdBuffer.writeBigUInt64LE(id);
+
+            const winnerIndexBuffer = Buffer.alloc(8);
+            winnerIndexBuffer.writeBigUInt64LE(winner - 1n);
+
+            const [winningTicketPDA] = PublicKey.findProgramAddressSync(
+                [USER_TICKET_SEED, lotteryIdBuffer, winnerIndexBuffer],
+                PROGRAM_ID
+            );
+
+            ticketAccount = await connection.getAccountInfo(winningTicketPDA);
+            if (ticketAccount) {
+                foundId = id;
+                console.log(`Winning Ticket PDA (Lottery #${id}):`, winningTicketPDA.toBase58());
+                break;
+            }
+        }
+
+        if (ticketAccount) {
+            // Decode UserTicket: discriminator(8) + user(32) + lottery_id(8) + is_winner(1) + prize(8) + is_claimed(1)
+            const ticketData = ticketAccount.data;
+            const winnerPubkey = new PublicKey(ticketData.slice(8, 40));
+            const ticketLotteryId = ticketData.readBigUInt64LE(40);
+            const isWinnerSet = ticketData.readUInt8(48) === 1;
+            const prizeAmount = ticketData.readBigUInt64LE(49);
+            const isClaimed = ticketData.readUInt8(57) === 1;
+
+            console.log('Winner Wallet:', winnerPubkey.toBase58());
+            console.log('Winning Status:', isWinnerSet ? 'PAID OUT' : 'PENDING PAYOUT');
+            if (isWinnerSet) {
+                console.log('Prize Amount:', prizeAmount.toString(), 'lamports', `(${Number(prizeAmount) / 1e9} SOL)`);
+            }
+        } else {
+            console.log('⚠️  Winning ticket account not found for current or previous lottery ID.');
+        }
+        console.log('');
+    }
 
     // Check ticket price
     if (ticketPrice === 10000000n) {

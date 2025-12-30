@@ -42,7 +42,7 @@ pub struct Payout<'info> {
         seeds = [
             USER_TICKET_SEED,
             &lottery_state.current_lottery_id.to_le_bytes(),
-            &lottery_state.winner.to_le_bytes() 
+            &(lottery_state.winner - 1).to_le_bytes() 
         ],
         bump,
         constraint = winning_ticket.lottery_id == lottery_state.current_lottery_id @ HashtrologyErrors::InvalidWinner,
