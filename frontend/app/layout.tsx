@@ -1,49 +1,50 @@
-import type { Metadata } from 'next';
-import { Outfit, Plus_Jakarta_Sans } from 'next/font/google';
-import './globals.css';
-import { WalletContextProvider } from '@/components/WalletContextProvider';
+import type { Metadata } from "next";
+import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
+import "./globals.css";
+import { WalletContextProvider } from "@/components/WalletContextProvider";
 
 const outfit = Outfit({
-  subsets: ['latin'],
-  variable: '--font-outfit',
-  display: 'swap',
+	subsets: ["latin"],
+	variable: "--font-outfit",
+	display: "swap",
 });
 
 const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-jakarta',
-  display: 'swap',
+	subsets: ["latin"],
+	variable: "--font-jakarta",
+	display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: 'Hastrology - AI-Powered Horoscopes on Solana',
-  description: 'Discover your cosmic path with AI-generated horoscopes. Pay with Solana, share on X, and enter daily lottery.',
-  keywords: ['horoscope', 'astrology', 'solana', 'crypto', 'AI', 'web3'],
-  authors: [{ name: 'Hastrology' }],
-  openGraph: {
-    title: 'Hastrology - Your Cosmic Path On-Chain',
-    description: 'AI-Powered Horoscopes on Solana',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Hastrology',
-    description: 'AI-Powered Horoscopes on Solana',
-  },
+	title: "Hastrology - AI-Powered Horoscopes on Solana",
+	description:
+		"Discover your cosmic path with AI-generated horoscopes. Pay with Solana, share on X, and enter daily lottery.",
+	keywords: ["horoscope", "astrology", "solana", "crypto", "AI", "web3"],
+	authors: [{ name: "Hastrology" }],
+	openGraph: {
+		title: "Hastrology - Your Cosmic Path On-Chain",
+		description: "AI-Powered Horoscopes on Solana",
+		type: "website",
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: "Hastrology",
+		description: "AI-Powered Horoscopes on Solana",
+	},
 };
 
 export default function RootLayout({
-  children,
+	children,
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-  return (
-    <html lang="en" className="scroll-smooth">
-      <body className={`${outfit.variable} ${jakarta.variable} font-sans bg-slate-950 text-white antialiased`}>
-        <WalletContextProvider>
-          {children}
-        </WalletContextProvider>
-      </body>
-    </html>
-  );
+	return (
+		<html className="scroll-smooth" lang="en">
+			<body
+				className={`${outfit.variable} ${jakarta.variable} font-sans bg-black text-white antialiased`}
+			>
+				<WalletContextProvider>{children}</WalletContextProvider>
+			</body>
+		</html>
+	);
 }

@@ -8,12 +8,20 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   wallet_address TEXT UNIQUE NOT NULL,
-  dob TEXT NOT NULL,
-  birth_time TEXT NOT NULL,
-  birth_place TEXT NOT NULL,
+  username TEXT,
+  dob TEXT,
+  birth_time TEXT,
+  birth_place TEXT,
+  twitter_id TEXT,
+  twitter_username TEXT,
+  twitter_profile_url TEXT,
+  latitude NUMERIC,
+  longitude NUMERIC,
+  timezone_offset NUMERIC,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
 
 -- Create horoscopes table
 CREATE TABLE IF NOT EXISTS horoscopes (
